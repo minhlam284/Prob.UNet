@@ -3,13 +3,28 @@ import pickle
 import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader
+from dataset.transform import TransformDataset
+
+def get_mmis_dataset(args, mode: str = ""):
+    train_dataset, val_dataset = None, None
+
+    if mode in ["train", "both"]:
+        train_dataset = MMISDataset(pickle_path=args.data_dir, mask_type=args.mask_type)
+        train_dataset = TransformDataset(train_dataset, image_size=args.image_size)
+
+    if mode in ["val", "both"]:
+        val_dataset = MMISDataset(pickle_path=args.data_dir, mask_type=args.mask_type)
+        val_dataset = TransformDataset(val_dataset, image_size=args.image_size)
+
+    return train_dataset, val_dataset
+
 
 class MMISDataset(Dataset):
 
-    def __init__(self, pickle_path, transform=None, mask_type="ensemble"):
+    def __init__(self, pickle_path, mask_type=""):
 
         self.pickle_path = pickle_path
-        self.transform = transform
+        # self.transform = transform
         self.mask_type = mask_type
         self.data = {"images": [], "masks": []}
         self.masks_per_image = 4 
@@ -85,9 +100,9 @@ class MMISDataset(Dataset):
             if len(mask.shape) == 2:
                 mask = mask.unsqueeze(0) 
         
-        if self.transform:
-            image, mask = self.transform(image, mask)
-        
+        # if self.transform:
+        #     image, mask = self.transform(image, mask)
+
         return image, mask
 
 
