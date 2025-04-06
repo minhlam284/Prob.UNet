@@ -2,7 +2,7 @@ import os
 import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader
-from dataset.transform import TransformDataset
+from transform import TransformDataset
 import random
 
 def get_mmis_dataset(args, mode: str = ""):
@@ -99,7 +99,7 @@ if __name__ == "__main__":
         image_size = 128  # Kích thước ảnh sau khi biến đổi
     
     args = Args()
-    train_dataset, val_dataset = get_mmis_dataset_np(args, mode="both")
+    train_dataset, val_dataset = get_mmis_dataset(args, mode="both")
 
     print(f"Train dataset size: {len(train_dataset)}")
     print(f"Validation dataset size: {len(val_dataset)}")
