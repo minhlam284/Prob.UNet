@@ -82,7 +82,7 @@ if __name__== "__main__":
     # parser.add_argument("--dataset", default=None, type=str, help="Dataset to use.")
     parser.add_argument("--data_dir", required=True, type=str, help="Path to the dataset pickle file")
     parser.add_argument("--image_size", default=128, type=int, help="Size of image to resize for training")
-    parser.add_argument("--mask_type", choices=["ensemble", "random"], default="ensemble", type=str, help="Use ensemble mask or random mask for each datapoint")
+    parser.add_argument("--mask_type", choices=["ensemble", "random"], default="random", type=str, help="Use ensemble mask or random mask for each datapoint")
     parser.add_argument("--batch_size", default=32, type=int, help="Batch size")
     parser.add_argument("--num_workers", default=4, type=int, help ="Number of workers to read data")
     parser.add_argument("--epoch", default=100, type=int, help ="Number of epoch to train")
