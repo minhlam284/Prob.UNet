@@ -114,7 +114,7 @@ if __name__ == "__main__":
     print(f"Dataset size: {len(dataset)}")
     
 
-    image, mask = dataset[0]
+    image, mask = dataset[1]
     print(f"Image shape: {image.shape}")
     print(f"Mask shape: {mask.shape}")
     
