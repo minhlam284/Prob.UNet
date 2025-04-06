@@ -1,0 +1,5 @@
+torch==2.6.0
+numpy==2.1.1
+tqdm==4.67.1
+albumentations==2.0.5
+h5py==3.13.0
