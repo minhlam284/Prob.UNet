@@ -1,7 +1,10 @@
 from typing import List
+import os
+import json
 import torch
 import random
 import argparse
+from argparse import Namespace
 import numpy as np
 from tqdm import tqdm
 from pathlib import Path
@@ -19,25 +22,18 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
 from model.probabilistic_unet import ProbabilisticUnet
-from dataset import (get_isic2016_dataset, get_isic2018_dataset,
-                    get_lidc_dataset, get_msmri_dataset)
+from dataset import get_lidc_dataset, get_mmis_dataset
 
 def get_dataloader(args):
     if args.dataset == "lidc":
-        train_dataset, val_dataset = get_lidc_dataset(args, mode="val")
-    elif args.dataset == "msmri":
-        train_dataset, val_dataset = get_msmri_dataset(args, mode="val")
-    elif "isic" in args.dataset:
-        if args.dataset == "isic2016":
-            train_dataset, val_dataset = get_isic2016_dataset(args, mode="val")
-        elif args.dataset == "isic2018":
-            train_dataset, val_dataset = get_isic2018_dataset(args, mode="val")
+        val_dataset = get_lidc_dataset(args, mode="val")
+    elif args.dataset == "mmis":
+        val_dataset = get_mmis_dataset(args, mode="val")
     
-    print("Number of training/val:", (len(train_dataset), len(val_dataset)))
-    train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=args.num_workers, shuffle=True)
+    print("Number of val:", len(val_dataset))
     val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=args.num_workers, shuffle=True)
     
-    return train_dataloader, val_dataloader
+    return val_dataloader
 
 def post_process(logits):
     preds = (torch.sigmoid(logits) > 0.5).to(torch.float32)
@@ -215,11 +211,19 @@ def eval(args):
         file.write(f"checkpoint: {args.checkpoint}\n")
         file.write(f"n_ensemble: {args.n_ensemble}\n")
         file.write(f"batch_size: {args.batch_size}\n")
+    
+    args_filepath = checkpoint_path.parent / 'args.json'
+    with open(args_filepath, 'r') as f:
+        args_dict = json.load(f)
+        args.dataset = args_dict["dataset"]
+        args.data_dir = args_dict["data_dir"]
+        args.input_channel = args_dict["input_channel"]
+        args.image_size = args_dict["image_size"]
+        args.mask_type = "multi"
 
     val_dataloader = get_dataloader(args)
-
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model = ProbabilisticUnet(input_channels=1, num_classes=1, num_filters=[32,64,128,192], latent_dim=2, no_convs_fcomb=4, beta=10.0)
+    model = ProbabilisticUnet(input_channels=args_dict["input_channel"], num_classes=1, num_filters=[32,64,128,192], latent_dim=2, no_convs_fcomb=4, beta=10.0)
     state_dict = torch.load(checkpoint_path, map_location="cpu")
     model.load_state_dict(state_dict['model_state_dict'])
     model.eval()
@@ -234,13 +238,13 @@ def eval(args):
         if not isinstance(masks, list):
             masks = [masks]
         
+        gts = [mask.squeeze(dim=1) for mask in masks]
         preds = []
         model(images, None, training=False)
         for i in tqdm(range(args.n_ensemble)):
             sample_logits = model.sample()
             preds.append(post_process(sample_logits).cpu().squeeze(dim=1))
-
-            metrics = compute_metric(preds, masks, batch=images.shape[0])
+            metrics = compute_metric(preds, gts, batch=images.shape[0])
             
             ged_iter, ncc_iter, max_dice_iter, dice_iter, iou_iter = metrics
             ged[i] += ged_iter
@@ -256,8 +260,7 @@ def eval(args):
                             f"max_dice_iter: {max_dice_iter} --- "
                             f"dice_iter: {dice_iter} --- "
                             f"iou_iter: {iou_iter}\n")
-
-        save_image(patches, masks, preds, checkpoint_path.parent / args.filename, batch_id)
+        save_image(patches, gts, preds, checkpoint_path.parent / args.filename, batch_id)
 
     for i in range(args.n_ensemble):
         dice[i] /= len(val_dataloader)
@@ -275,9 +278,6 @@ def eval(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Training Probabilistic Unet")
-    parser.add_argument("--dataset", default=None, type=str, help="Dataset to use.")
-    parser.add_argument("--image_size", default=256, type=int, help="Size of image to resize for training")
-    parser.add_argument("--mask_type", choices=["ensemble", "random"], default="ensemble", type=str, help="Use ensemble mask or random mask for each datapoint")
     parser.add_argument("--n_ensemble", default=1, type=int, help="Number of samples to ensemble")
     parser.add_argument("--batch_size", default=32, type=int, help="Batch size")
     parser.add_argument("--num_workers", default=4, type=int, help ="Number of workers to read data")
