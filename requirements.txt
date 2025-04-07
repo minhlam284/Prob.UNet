@@ -3,3 +3,5 @@ numpy==2.1.1
 tqdm==4.67.1
 albumentations==2.0.5
 h5py==3.13.0
+matplotlib
+
