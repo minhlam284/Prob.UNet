@@ -41,11 +41,11 @@ if __name__ == '__main__':
     data_dir = Path("../Data")
 
     process_all_samples(
-        dataset_root=data_dir / "MMIS2024TASK1/training",
+        dataset_root=data_dir / "qubiq/training",
         output_root=data_dir / "Train"
     )
     process_all_samples(
-        dataset_root=data_dir / "MMIS2024TASK1/validation",
+        dataset_root=data_dir / "qubiq/validation",
         output_root=data_dir / "Val"
     )
 
