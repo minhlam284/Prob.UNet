@@ -2,26 +2,6 @@ import nibabel as nib
 import numpy as np
 from pathlib import Path
 
-# def process_sample(sample_dir, output_dir):
-#     sample_dir = Path(sample_dir)
-#     output_dir = Path(output_dir)
-#     output_dir.mkdir(parents=True, exist_ok=True)
-
-#     # Load image and masks
-#     image = nib.load(sample_dir / "image.nii.gz").get_fdata()
-#     mask1 = nib.load(sample_dir / "task01_seg01.nii.gz").get_fdata()
-#     mask2 = nib.load(sample_dir / "task01_seg02.nii.gz").get_fdata()
-
-#     assert image.shape == mask1.shape == mask2.shape, f"Kích thước không khớp tại {sample_dir}"
-
-#     # Process each slice
-#     for i in range(image.shape[0]):
-#         slice_img = image[i,:, :]
-#         slice_m1 = mask1[i,:, :]
-#         slice_m2 = mask2[i,:, :]
-#         slice_all = np.stack([slice_img, slice_m1, slice_m2], axis=-1)
-#         np.save(output_dir / f"image_{i}.npy", slice_all)
-
 def process_sample_v2(sample_dir, output_dir):
     sample_dir = Path(sample_dir)
     output_dir = Path(output_dir)
@@ -56,4 +36,17 @@ def process_all_samples(dataset_root, output_root):
             sample_output = output_root / sample_dir.name
             print(f"Đang xử lý: {sample_dir.name}")
             process_sample_v2(sample_dir, sample_output)
-process_all_samples("/Users/kaiser_1/Documents/Data/test", "/Users/kaiser_1/Documents/Data/data/qubiq/test")
+
+if __name__ == '__main__':
+    data_dir = Path("../Data")
+
+    process_all_samples(
+        dataset_root=data_dir / "MMIS2024TASK1/training",
+        output_root=data_dir / "Train"
+    )
+    process_all_samples(
+        dataset_root=data_dir / "MMIS2024TASK1/validation",
+        output_root=data_dir / "Val"
+    )
+
+

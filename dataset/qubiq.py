@@ -74,7 +74,7 @@ class QUBIQDataset(Dataset):
         return mask, image
 
 if __name__ == "__main__":
-    dataset = MMISDataset(data_dir='/Users/kaiser_1/Documents/Data/data/qubiq', mask_type="multi")
+    dataset = QUBIQDataset(data_dir='/Users/kaiser_1/Documents/Data/data/qubiq', mask_type="multi")
     print(len(dataset))
     id = random.randint(0, len(dataset) - 1)
     print(id)
