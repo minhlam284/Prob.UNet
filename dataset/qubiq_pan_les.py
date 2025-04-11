@@ -5,23 +5,23 @@ import random
 from torch.utils.data import Dataset
 from .transform import TransformDataset
 
-def get_qubiq_dataset(args, mode: str = ""):
+def get_qubiq_pan_les_dataset(args, mode: str = ""):
 
-    val_dataset = QUBIQDataset(data_dir=args.data_dir, train_val_test_dir="Val", mask_type=args.mask_type)
+    val_dataset = QUBIQPanLesDataset(data_dir=args.data_dir, train_val_test_dir="Val", mask_type=args.mask_type)
     val_dataset = TransformDataset(val_dataset, image_size=args.image_size)
     if mode == "val":   
         return val_dataset
     
-    train_dataset = QUBIQDataset(data_dir=args.data_dir, train_val_test_dir="Train", mask_type=args.mask_type)
+    train_dataset = QUBIQPanLesDataset(data_dir=args.data_dir, train_val_test_dir="Train", mask_type=args.mask_type)
     train_dataset = TransformDataset(train_dataset, image_size=args.image_size)
     if mode == "train":
         return train_dataset
     
     return train_dataset, val_dataset
 
-class QUBIQDataset(Dataset):
+class QUBIQPanLesDataset(Dataset):
 
-    dataset_url = "https://mmis2024.com/info?task=1"
+    dataset_url = "https://qubiq21.grand-challenge.org/participation/"
     masks_per_image = 2
 
     def __init__(
@@ -74,13 +74,13 @@ class QUBIQDataset(Dataset):
         return mask, image
 
 if __name__ == "__main__":
-    dataset = QUBIQDataset(data_dir='/Users/kaiser_1/Documents/Data/data/qubiq', mask_type="multi")
+    dataset = QUBIQPanLesDataset(data_dir='../data/qubiq/pan_les', mask_type="multi")
     print(len(dataset))
     id = random.randint(0, len(dataset) - 1)
     print(id)
 
-    masks, images = dataset[id]
-    print(images.shape, images.dtype, type(images))
+    masks, image = dataset[id]
+    print(image.shape, image.dtype, type(image))
     
     masks = np.stack(masks, axis=-1)
     mask_e = masks.mean(axis=-1)
@@ -90,27 +90,31 @@ if __name__ == "__main__":
     import seaborn as sns
     import matplotlib.pyplot as plt
     
-    fig, axs = plt.subplots(3, 3, figsize=(15, 10))
+    fig, axs = plt.subplots(2, 3, figsize=(15, 10))
     
-    axs[0, 0].imshow(images[:,:], cmap='gray')
-    axs[0, 0].set_title('T1')
+    axs[0, 0].imshow(image, cmap='gray')
+    axs[0, 0].set_title('Image')
     axs[0, 0].axis("off")
     
-    sns.heatmap(mask_var, ax=axs[1, 0], cmap="viridis")
-    axs[1, 0].set_title('Variance Heatmap')
-    axs[1, 0].axis("off")
-
-    axs[1, 1].imshow(mask_e, cmap='gray')
-    axs[1, 1].set_title('Mask_e')
-    axs[1, 1].axis("off")
-
-    axs[1, 2].imshow(masks[:,:,0], cmap='gray')
-    axs[1, 2].set_title('Mask_1')
-    axs[1, 2].axis("off")
+    sns.heatmap(mask_var, ax=axs[0, 1], cmap="viridis")
+    axs[0, 1].set_title('Variance Heatmap')
+    axs[0, 1].axis("off")
     
-    axs[2, 0].imshow(masks[:,:,1], cmap='gray')
-    axs[2, 0].set_title('Mask_2')
-    axs[2, 0].axis("off")
+    axs[0, 2].imshow(mask_var, cmap='gray')
+    axs[0, 2].set_title('Variance')
+    axs[0, 2].axis("off")
+    
+    axs[1, 0].imshow(masks[:,:,0], cmap='gray')
+    axs[1, 0].set_title('Mask_1')
+    axs[1, 0].axis("off")
+    
+    axs[1, 1].imshow(masks[:,:,1], cmap='gray')
+    axs[1, 1].set_title('Mask_2')
+    axs[1, 1].axis("off")
+    
+    axs[1, 2].imshow(mask_e, cmap='gray')
+    axs[1, 2].set_title('Mask_e')
+    axs[1, 2].axis("off")
     
     plt.tight_layout()
     plt.show()
