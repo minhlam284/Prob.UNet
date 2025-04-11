@@ -20,13 +20,17 @@ torch.backends.cudnn.benchmark = False
 from model.probabilistic_unet import ProbabilisticUnet
 from utils import l2_regularisation
 
-from dataset import get_lidc_dataset, get_mmis_dataset
+from dataset import get_lidc_dataset, get_mmis_dataset, get_qubiq_pan_dataset, get_qubiq_pan_les_dataset
 
 def get_dataloader(args):
     if args.dataset == "lidc":
         train_dataset, val_dataset = get_lidc_dataset(args)
     elif args.dataset == "mmis":
         train_dataset, val_dataset = get_mmis_dataset(args)
+    elif args.dataset == "qubiq_pan":
+        train_dataset, val_dataset = get_qubiq_pan_dataset(args)
+    elif args.dataset == "qubiq_pan_les":
+        train_dataset, val_dataset = get_qubiq_pan_les_dataset(args)
     
     print("Number of training/val:", (len(train_dataset), len(val_dataset)))
     train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=args.num_workers, shuffle=True)
@@ -41,6 +45,7 @@ def check_nan_grad(net):
     return False
 
 def train(args):
+    args.log_dir = args.log_dir + f"/{args.dataset}"
     os.makedirs(args.log_dir, exist_ok=True)
     log_filepath = f"{args.log_dir}/log.txt"
     args_filepath = f"{args.log_dir}/args.json"
@@ -51,7 +56,6 @@ def train(args):
     train_dataloader, val_dataloader = get_dataloader(args)
     
     # TODO resume checkpoint
-
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     net = ProbabilisticUnet(input_channels=args.input_channel, num_classes=1, num_filters=[32,64,128,192], latent_dim=2, no_convs_fcomb=4, beta=10.0)
     net.to(device)

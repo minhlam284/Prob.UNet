@@ -4,7 +4,6 @@ import json
 import torch
 import random
 import argparse
-from argparse import Namespace
 import numpy as np
 from tqdm import tqdm
 from pathlib import Path
@@ -22,13 +21,17 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
 from model.probabilistic_unet import ProbabilisticUnet
-from dataset import get_lidc_dataset, get_mmis_dataset
+from dataset import get_lidc_dataset, get_mmis_dataset, get_qubiq_pan_dataset, get_qubiq_pan_les_dataset
 
 def get_dataloader(args):
     if args.dataset == "lidc":
         val_dataset = get_lidc_dataset(args, mode="val")
     elif args.dataset == "mmis":
         val_dataset = get_mmis_dataset(args, mode="val")
+    elif args.dataset == "qubiq_pan":
+        val_dataset = get_qubiq_pan_dataset(args, mode="val")
+    elif args.dataset == "qubiq_pan_les":
+        val_dataset = get_qubiq_pan_les_dataset(args, mode="val")
     
     print("Number of val:", len(val_dataset))
     val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=args.num_workers, shuffle=True)
